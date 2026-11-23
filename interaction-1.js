@@ -65,12 +65,12 @@ function accelerationChange(accx, accy, accz) {
 }
 
 function rotationChange(rotx, roty, rotz) {
-    const tilt = Math.max(Math.abs(rotx), Math.abs(roty)); // 平放时为 0
-    if (tilt < 3) return;                                   // 小于 3° 算水平 → 不出声
-    const t = Math.min(tilt, 30) / 30;                      // 0~30° 变成 0~1
-    if (millis() - lastBubble > 900 - 650 * t) {            // 越斜，间隔越短（900→250ms）
+    const tilt = Math.max(Math.abs(rotx), Math.abs(roty));
+    if (tilt < 3) return;
+    const t = Math.min(tilt, 30) / 30;    
+    if (millis() - lastBubble > 900 - 650 * t) { 
         lastBubble = millis();
-        playAudio(350 + 650 * t);                           // 越斜，音越高（350→1000Hz）
+        playAudio(350 + 650 * t);
     }
 }
 
@@ -121,8 +121,8 @@ function playAudio(freq) {
     // them printed on the console of your browser when you load the page)
     // For example if you change to a bell sound, here you could use "/churchBell/gate" instead of
     // "/thunder/rumble".
-    dspNode.setParamValue("/drop/freq/0x00", constrain(freq, fMin, fMax)); // 先设音高
-    setTimeout(() => {                                                    // 10ms 后再触发
+    dspNode.setParamValue("/drop/freq/0x00", constrain(freq, fMin, fMax)); 
+    setTimeout(() => {
         dspNode.setParamValue("/drop/drop", 1);
         setTimeout(() => { dspNode.setParamValue("/drop/drop", 0) }, 30);
     }, 10);
