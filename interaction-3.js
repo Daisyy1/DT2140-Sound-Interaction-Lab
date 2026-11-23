@@ -32,7 +32,10 @@ brass.createDSP(audioContext, 1024)
         console.log('params: ', dspNode.getParams());
         const jsonString = dspNode.getJSON();
         jsonParams = JSON.parse(jsonString)["ui"][0]["items"];
-        dspNodeParams = jsonParams
+        dspNodeParams = jsonParams;
+        getMinMaxParam("/brass/blower/pressure");               // prints the range: 0 ~ 1
+        dspNode.setParamValue("/brass/blower/pressure", 0);     // start silent
+        dspNode.setParamValue("/brass/brassModel/mute", 0);     // open trumpet -> louder
         // const exampleMinMaxParam = findByAddress(dspNodeParams, "/thunder/rumble");
         // // ALWAYS PAY ATTENTION TO MIN AND MAX, ELSE YOU MAY GET REALLY HIGH VOLUMES FROM YOUR SPEAKERS
         // const [exampleMinValue, exampleMaxValue] = getParamMinMax(exampleMinMaxParam);
@@ -56,11 +59,19 @@ function accelerationChange(accx, accy, accz) {
 }
 
 function rotationChange(rotx, roty, rotz) {
+    if (mouseIsPressed) return;                   // don't override desktop mouse testing
+    // rotationX: ~0 when flat, ~90 when the top of the phone points straight up
+    const t = constrain((rotx - 50) / 40, 0, 1);  // 50 deg -> silent, 90 deg -> full
+    playAudio(t <= 0 ? 0 : 0.55 + 0.45 * t);      // brass needs > ~0.55 pressure to sound
 }
 
 function mousePressed() {
-    playAudio(mouseX/windowWidth)
+    playAudio(0.55 + 0.45 * (mouseX / windowWidth))
     // Use this for debugging from the desktop!
+}
+
+function mouseReleased() {
+    playAudio(0);
 }
 
 function deviceMoved() {
@@ -74,7 +85,6 @@ function deviceTurned() {
 function deviceShaken() {
     shaketimer = millis();
     statusLabels[0].style("color", "pink");
-    playAudio();
 }
 
 function getMinMaxParam(address) {
@@ -102,7 +112,6 @@ function playAudio(pressure) {
     if (audioContext.state === 'suspended') {
         return;
     }
-    console.log(pressure)
     dspNode.setParamValue("/brass/blower/pressure", pressure)
 }
 
