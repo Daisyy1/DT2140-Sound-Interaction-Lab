@@ -11,8 +11,12 @@ let dspNode = null;
 let dspNodeParams = null;
 let jsonParams = null;
 
+
+let fMin = 150, fMax = 2000;
+let lastBubble = 0;
+
 // Change here to ("tuono") depending on your wasm file name
-const dspName = "tuono";
+const dspName = "drop";
 const instance = new FaustWasm2ScriptProcessor(dspName);
 
 // output to window or npm package module
@@ -25,14 +29,19 @@ if (typeof module === "undefined") {
 }
 
 // The name should be the same as the WASM file, so change tuono with brass if you use brass.wasm
-tuono.createDSP(audioContext, 1024)
+drop.createDSP(audioContext, 1024)
     .then(node => {
         dspNode = node;
         dspNode.connect(audioContext.destination);
         console.log('params: ', dspNode.getParams());
         const jsonString = dspNode.getJSON();
         jsonParams = JSON.parse(jsonString)["ui"][0]["items"];
-        dspNodeParams = jsonParams
+        dspNodeParams = jsonParams;
+        const range = getMinMaxParam("/drop/freq/0x00");
+        fMin = range[0];
+        fMax = range[1];
+        dspNode.setParamValue("/drop/Freeverb/Wet",0.08);
+        dspNode.setParamValue("/drop/Freeverb/0x00/RoomSize",0.2);
         // const exampleMinMaxParam = findByAddress(dspNodeParams, "/thunder/rumble");
         // // ALWAYS PAY ATTENTION TO MIN AND MAX, ELSE YOU MAY GET REALLY HIGH VOLUMES FROM YOUR SPEAKERS
         // const [exampleMinValue, exampleMaxValue] = getParamMinMax(exampleMinMaxParam);
@@ -56,10 +65,17 @@ function accelerationChange(accx, accy, accz) {
 }
 
 function rotationChange(rotx, roty, rotz) {
+    const tilt = Math.max(Math.abs(rotx), Math.abs(roty)); // 平放时为 0
+    if (tilt < 3) return;                                   // 小于 3° 算水平 → 不出声
+    const t = Math.min(tilt, 30) / 30;                      // 0~30° 变成 0~1
+    if (millis() - lastBubble > 900 - 650 * t) {            // 越斜，间隔越短（900→250ms）
+        lastBubble = millis();
+        playAudio(350 + 650 * t);                           // 越斜，音越高（350→1000Hz）
+    }
 }
 
 function mousePressed() {
-    playAudio()
+    playAudio(350 + 650 * (mouseX / windowWidth));
     // Use this for debugging from the desktop!
 }
 
@@ -74,7 +90,6 @@ function deviceTurned() {
 function deviceShaken() {
     shaketimer = millis();
     statusLabels[0].style("color", "pink");
-    playAudio();
 }
 
 function getMinMaxParam(address) {
@@ -95,7 +110,7 @@ function getMinMaxParam(address) {
 //
 //==========================================================================================
 
-function playAudio() {
+function playAudio(freq) {
     if (!dspNode) {
         return;
     }
@@ -106,8 +121,11 @@ function playAudio() {
     // them printed on the console of your browser when you load the page)
     // For example if you change to a bell sound, here you could use "/churchBell/gate" instead of
     // "/thunder/rumble".
-    dspNode.setParamValue("/thunder/rumble", 1)
-    setTimeout(() => { dspNode.setParamValue("/thunder/rumble", 0) }, 100);
+    dspNode.setParamValue("/drop/freq/0x00", constrain(freq, fMin, fMax)); // 先设音高
+    setTimeout(() => {                                                    // 10ms 后再触发
+        dspNode.setParamValue("/drop/drop", 1);
+        setTimeout(() => { dspNode.setParamValue("/drop/drop", 0) }, 30);
+    }, 10);
 }
 
 //==========================================================================================
