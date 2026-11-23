@@ -32,11 +32,7 @@ bells.createDSP(audioContext, 1024)
         console.log('params: ', dspNode.getParams());
         const jsonString = dspNode.getJSON();
         jsonParams = JSON.parse(jsonString)["ui"][0]["items"];
-        dspNodeParams = jsonParams;
-        // sharper, brighter strike -> sounds more like an alarm bell
-        dspNode.setParamValue("/englishBell/strikeSharpness", 3);
-        dspNode.setParamValue("/englishBell/strikeCutOff", 12000);
-        dspNode.setParamValue("/englishBell/strikePosition", 2);
+        dspNodeParams = jsonParams
         // const exampleMinMaxParam = findByAddress(dspNodeParams, "/thunder/rumble");
         // // ALWAYS PAY ATTENTION TO MIN AND MAX, ELSE YOU MAY GET REALLY HIGH VOLUMES FROM YOUR SPEAKERS
         // const [exampleMinValue, exampleMaxValue] = getParamMinMax(exampleMinMaxParam);
@@ -55,29 +51,15 @@ bells.createDSP(audioContext, 1024)
 //
 //==========================================================================================
 
-let fallStart = null;    // when the free fall started (ms)
-let lastRing = -10000;   // when the bell last rang (ms)
-
 function accelerationChange(accx, accy, accz) {
-    // p5 gives acceleration WITHOUT gravity, x2: ~0 when still, ~9.81 in free fall
-    const mag = Math.sqrt(accx * accx + accy * accy + accz * accz) / 2;
-    if (mag > 7) {
-        if (fallStart === null) fallStart = millis();
-        // falling 30 cm takes sqrt(2 * 0.3 / 9.81) = 0.25 s
-        if (millis() - fallStart > 250 && millis() - lastRing > 1500) {
-            lastRing = millis();
-            playAudio();
-        }
-    } else {
-        fallStart = null;
-    }
+    // playAudio()
 }
 
 function rotationChange(rotx, roty, rotz) {
 }
 
 function mousePressed() {
-    playAudio()
+    // playAudio()
     // Use this for debugging from the desktop!
 }
 
@@ -92,6 +74,7 @@ function deviceTurned() {
 function deviceShaken() {
     shaketimer = millis();
     statusLabels[0].style("color", "pink");
+    playAudio();
 }
 
 function getMinMaxParam(address) {
@@ -119,14 +102,8 @@ function playAudio() {
     if (audioContext.state === 'suspended') {
         return;
     }
-    // alarm pattern: three quick strikes "ding-ding-ding"
-    const strike = () => {
-        dspNode.setParamValue("/englishBell/gate", 1)
-        setTimeout(() => { dspNode.setParamValue("/englishBell/gate", 0) }, 100);
-    };
-    strike();
-    setTimeout(strike, 250);
-    setTimeout(strike, 500);
+    dspNode.setParamValue("/englishBell/gate", 1)
+    setTimeout(() => { dspNode.setParamValue("/englishBell/gate", 0) }, 100);
 }
 
 //==========================================================================================
