@@ -65,6 +65,7 @@ function rotationChange(rotx, roty, rotz) {
     const t = constrain((rotx - 75) / 15, 0, 1);  // 75 deg -> starts, 90 deg -> full
     if (t <= 0) {playAudio(0);}
     else{playAudio(0.55 + 0.45 * t);}
+}
 
 function mousePressed() {
     playAudio(0.55 + 0.45 * (mouseX / windowWidth))
