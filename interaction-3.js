@@ -63,8 +63,8 @@ function rotationChange(rotx, roty, rotz) {
     // rotationX: ~0 when flat, ~90 when the top of the phone points straight up
     // below 75 deg (normal holding while looking at the screen is ~50-70 deg) -> silent
     const t = constrain((rotx - 75) / 15, 0, 1);  // 75 deg -> starts, 90 deg -> full
-    playAudio(t <= 0 ? 0 : 0.55 + 0.45 * t);      // brass needs > ~0.55 pressure to sound
-}
+    if (t <= 0) {playAudio(0);}
+    else{playAudio(0.55 + 0.45 * t);}
 
 function mousePressed() {
     playAudio(0.55 + 0.45 * (mouseX / windowWidth))
